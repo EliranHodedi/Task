@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const completedTaskList = document.getElementById('completed-tasks');
     const successMessage = document.getElementById('success-message');
     const totalTimeElement = document.getElementById('total-time');
+    const tasksTodayElement = document.getElementById('tasks-today');
     const currentTaskElement = document.getElementById('current-task');
     let taskCount = 0;
     let totalMinutes = 0;
@@ -31,6 +32,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const descriptionDiv = document.createElement('div');
         const actionsDiv = document.createElement('div');
         const timerDiv = document.createElement('div');
+        const showMore = document.createElement('span');
 
         checkbox.type = 'checkbox';
         span.textContent = name;
@@ -38,6 +40,8 @@ document.addEventListener('DOMContentLoaded', function() {
         descriptionDiv.classList.add('task-description');
         timerDiv.classList.add('timer');
         timerDiv.textContent = '00:00:00';
+        showMore.textContent = '...עוד';
+        showMore.classList.add('show-more');
 
         li.classList.add('task');
         const taskNumber = document.createElement('span');
@@ -57,13 +61,17 @@ document.addEventListener('DOMContentLoaded', function() {
         li.appendChild(checkbox);
         li.appendChild(span);
         li.appendChild(descriptionDiv);
+        li.appendChild(showMore);
         li.appendChild(timerDiv);
         li.appendChild(actionsDiv);
 
         taskList.appendChild(li);
+        updateTasksTodayCount();
+
+        let timerSeconds = 0;
 
         playButton.addEventListener('click', function() {
-            if (activeTimer) {
+            if (activeTimer && activeTaskElement !== li) {
                 clearInterval(activeTimer);
                 activeTaskElement.classList.remove('active-task');
             }
@@ -72,13 +80,14 @@ document.addEventListener('DOMContentLoaded', function() {
             li.classList.add('active-task');
             currentTaskElement.textContent = name;
 
-            let timerSeconds = 0;
             activeTimer = setInterval(function() {
                 timerSeconds++;
+                totalMinutes++;
                 const hours = String(Math.floor(timerSeconds / 3600)).padStart(2, '0');
                 const minutes = String(Math.floor((timerSeconds % 3600) / 60)).padStart(2, '0');
                 const seconds = String(timerSeconds % 60).padStart(2, '0');
                 timerDiv.textContent = `${hours}:${minutes}:${seconds}`;
+                totalTimeElement.textContent = Math.floor(totalMinutes / 60);
             }, 1000);
         });
 
@@ -100,8 +109,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 const timeParts = timerDiv.textContent.split(':');
                 const taskMinutes = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
                 totalMinutes += taskMinutes;
-                totalTimeElement.textContent = totalMinutes;
+                totalTimeElement.textContent = Math.floor(totalMinutes / 60);
                 taskList.removeChild(li);
+                updateTasksTodayCount();
             }
         });
 
@@ -113,46 +123,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 li.classList.remove('completed-task');
                 taskList.appendChild(li);
             }
+            updateTasksTodayCount();
         });
 
-        saveTasks();
-    }
-
-    function createButton(text, className) {
-        const button = document.createElement('button');
-        button.textContent = text;
-        button.classList.add(className);
-        return button;
-    }
-
-    function saveTasks() {
-        const tasks = [];
-        const completedTasks = [];
-        
-        taskList.querySelectorAll('.task').forEach(task => {
-            tasks.push(task.innerHTML);
+        showMore.addEventListener('click', function() {
+            if (descriptionDiv.style.maxHeight) {
+                descriptionDiv.style.maxHeight = null;
+                showMore.textContent = '...עוד';
+            } else {
+                descriptionDiv.style.maxHeight = descriptionDiv.scrollHeight + 'px';
+                showMore.textContent = 'הצג פחות';
+            }
         });
 
-        completedTaskList.querySelectorAll('.task').forEach(task => {
-            completedTasks.push(task.innerHTML);
-        });
-
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-        localStorage.setItem('completedTasks', JSON.stringify(completedTasks));
-    }
-
-    function loadTasks() {
-        const tasks = JSON.parse(localStorage.getItem('tasks'));
-        const completedTasks = JSON.parse(localStorage.getItem('completedTasks'));
-        
-        if (tasks) {
-            taskList.innerHTML = tasks.join('');
-        }
-        
-        if (completedTasks) {
-            completedTaskList.innerHTML = completedTasks.join('');
+        function createButton(text, className) {
+            const button = document.createElement('button');
+            button.textContent = text;
+            if (className) button.classList.add(className);
+            return button;
         }
     }
-    
-    loadTasks();
+
+    function updateTasksTodayCount() {
+        tasksTodayElement.textContent = taskList.children.length + completedTaskList.children.length;
+    }
+
+    function getCurrentDate() {
+        const today = new Date();
+        const hebrewDate = today.toLocaleDateString('he-IL');
+        const englishDate = today.toLocaleDateString('en-US');
+        return `${hebrewDate} | ${englishDate}`;
+    }
+
+    document.getElementById('date').textContent = getCurrentDate();
 });
