@@ -19,6 +19,10 @@ h1 {
     margin-bottom: 20px;
 }
 
+#stats {
+    margin-bottom: 20px;
+}
+
 form {
     margin-bottom: 20px;
 }
@@ -66,11 +70,14 @@ ul {
     margin-bottom: 10px;
     border-radius: 5px;
     position: relative;
+    display: flex;
+    align-items: center;
 }
 
 .task-description {
     font-size: 18px;
     color: #555;
+    flex: 1;
 }
 
 .task-title {
@@ -82,26 +89,29 @@ ul {
 .task-number {
     font-size: 20px;
     font-weight: bold;
-    position: absolute;
-    top: 50%;
-    left: 10px;
-    transform: translateY(-50%);
-}
-
-.completed-task {
-    background-color: #f0f0f0;
-}
-
-.completed-task .task-number {
-    color: #999;
+    margin-right: 10px;
 }
 
 .task-actions {
-    position: absolute;
-    bottom: 10px;
-    right: 10px;
+    margin-left: 10px;
 }
 
 .task-actions button {
     margin-left: 5px;
+}
+
+.timer {
+    margin-left: 10px;
+}
+
+.active-task {
+    background-color: #deffd9;
+}
+
+.completed-task {
+    background-color: #ccc;
+}
+
+.completed-task .task-number {
+    color: #999;
 }
