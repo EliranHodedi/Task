@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const playButton = createButton('▶ הפעלה', 'play');
         const pauseButton = createButton('⏸ השהייה', 'pause');
-        const stopButton = createButton('⏹ עצירה', 'stop');
+        const stopButton = createButton('⏹ עצירה');
 
         actionsDiv.classList.add('task-actions');
         actionsDiv.appendChild(playButton);
@@ -97,7 +97,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 li.classList.add('completed-task');
                 completedTaskList.appendChild(li);
                 currentTaskElement.textContent = 'אין משימה פעילה';
-                totalMinutes += parseInt(timerDiv.textContent.split(':')[1]) + (parseInt(timerDiv.textContent.split(':')[0]) * 60);
+                const timeParts = timerDiv.textContent.split(':');
+                const taskMinutes = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
+                totalMinutes += taskMinutes;
                 totalTimeElement.textContent = totalMinutes;
                 taskList.removeChild(li);
             }
