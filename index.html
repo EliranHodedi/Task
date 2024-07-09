@@ -5,6 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>מנהל משימות</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/5/tinymce.min.js" referrerpolicy="origin"></script>
+    <script>
+        tinymce.init({
+            selector: '#task-description',
+            plugins: 'lists link image preview',
+            toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat'
+        });
+    </script>
 </head>
 <body dir="rtl">
     <div class="container">
@@ -13,7 +21,7 @@
         <div id="stats">
             <p>סה"כ דקות עבודה החודש: <span id="total-time">0</span></p>
             <p>סה"כ משימות היום: <span id="tasks-today">0</span></p>
-            <p>אתה עובד עכשיו על: <span id="current-task">אין משימה פעילה</span></p>
+            <p>אתה עובד עכשיו על: <span id="current-task">אין משימות פעילות כרגע</span></p>
         </div>
         <form id="task-form">
             <input type="text" id="task-name" placeholder="שם המשימה" required>
