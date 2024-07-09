@@ -15,7 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     form.addEventListener('submit', function(e) {
         e.preventDefault();
         const taskName = document.getElementById('task-name').value;
-        const taskDescription = document.getElementById('task-description').value;
+        const taskDescription = tinymce.get('task-description').getContent();
 
         addTask(taskName, taskDescription);
         form.reset();
@@ -36,11 +36,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
         checkbox.type = 'checkbox';
         span.textContent = name;
-        descriptionDiv.textContent = description;
+        descriptionDiv.innerHTML = description;
         descriptionDiv.classList.add('task-description');
         timerDiv.classList.add('timer');
         timerDiv.textContent = '00:00:00';
-        showMore.textContent = '...עוד';
+        showMore.textContent = 'משולם';
         showMore.classList.add('show-more');
 
         li.classList.add('task');
@@ -110,13 +110,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 const taskMinutes = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
                 totalMinutes += taskMinutes;
                 totalTimeElement.textContent = Math.floor(totalMinutes / 60);
-                taskList.removeChild(li);
                 updateTasksTodayCount();
             }
         });
 
+        showMore.addEventListener('click', function() {
+            if (descriptionDiv.style.maxHeight) {
+                descriptionDiv.style.maxHeight = null;
+                showMore.textContent = 'משולם';
+            } else {
+                descriptionDiv.style.maxHeight = descriptionDiv.scrollHeight + 'px';
+                showMore.textContent = 'הצג פחות';
+            }
+        });
+
         checkbox.addEventListener('change', function() {
-            if (checkbox.checked) {
+            if (this.checked) {
                 li.classList.add('completed-task');
                 completedTaskList.appendChild(li);
             } else {
@@ -125,23 +134,6 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             updateTasksTodayCount();
         });
-
-        showMore.addEventListener('click', function() {
-            if (descriptionDiv.style.maxHeight) {
-                descriptionDiv.style.maxHeight = null;
-                showMore.textContent = '...עוד';
-            } else {
-                descriptionDiv.style.maxHeight = descriptionDiv.scrollHeight + 'px';
-                showMore.textContent = 'הצג פחות';
-            }
-        });
-
-        function createButton(text, className) {
-            const button = document.createElement('button');
-            button.textContent = text;
-            if (className) button.classList.add(className);
-            return button;
-        }
     }
 
     function updateTasksTodayCount() {
@@ -150,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function getCurrentDate() {
         const today = new Date();
-        const hebrewDate = today.toLocaleDateString('he-IL');
+        const hebrewDate = new Intl.DateTimeFormat('he-u-ca-hebrew', { dateStyle: 'full' }).format(today);
         const englishDate = today.toLocaleDateString('en-US');
         return `${hebrewDate} | ${englishDate}`;
     }
