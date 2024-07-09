@@ -1,128 +1,97 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('task-form');
+document.addEventListener("DOMContentLoaded", function() {
+    tinymce.init({
+        selector: '#task-desc',
+        plugins: 'advlist autolink lists link image charmap print preview anchor textcolor',
+        toolbar: 'undo redo | formatselect | bold italic backcolor | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | removeformat | help'
+    });
+
+    const addTaskButton = document.getElementById('add-task');
     const taskList = document.getElementById('task-list');
-    const completedTaskList = document.getElementById('completed-tasks');
-    const successMessage = document.getElementById('success-message');
+    const completedTaskList = document.getElementById('completed-task-list');
     const totalTimeElement = document.getElementById('total-time');
     const tasksTodayElement = document.getElementById('tasks-today');
     const currentTaskElement = document.getElementById('current-task');
-    let taskCount = 0;
     let totalMinutes = 0;
-    let activeTask = null;
-    let activeTimer = null;
-    let activeTaskElement = null;
 
-    form.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const taskName = document.getElementById('task-name').value;
-        const taskDescription = tinymce.get('task-description').getContent();
+    function getCurrentDate() {
+        const today = new Date();
+        const hebrewDate = new Intl.DateTimeFormat('he-u-ca-hebrew', { dateStyle: 'full' }).format(today);
+        const englishDate = today.toLocaleDateString('en-US');
+        return `${hebrewDate} | ${englishDate}`;
+    }
 
-        addTask(taskName, taskDescription);
-        form.reset();
-        successMessage.style.display = 'block';
-        setTimeout(function() {
-            successMessage.style.display = 'none';
-        }, 2000); // Hide the success message after 2 seconds
-    });
+    document.getElementById('date').textContent = getCurrentDate();
 
-    function addTask(name, description) {
+    function createTaskElement(title, description) {
         const li = document.createElement('li');
-        const checkbox = document.createElement('input');
-        const span = document.createElement('span');
-        const descriptionDiv = document.createElement('div');
-        const actionsDiv = document.createElement('div');
-        const timerDiv = document.createElement('div');
-        const showMore = document.createElement('span');
+        li.className = 'task';
 
-        checkbox.type = 'checkbox';
-        span.textContent = name;
-        descriptionDiv.innerHTML = description;
-        descriptionDiv.classList.add('task-description');
-        timerDiv.classList.add('timer');
-        timerDiv.textContent = '00:00:00';
-        showMore.textContent = 'משולם';
-        showMore.classList.add('show-more');
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'task-title';
+        titleSpan.textContent = title;
 
-        li.classList.add('task');
-        const taskNumber = document.createElement('span');
-        taskNumber.textContent = ++taskCount;
-        taskNumber.classList.add('task-number');
+        const descDiv = document.createElement('div');
+        descDiv.className = 'task-desc';
+        descDiv.innerHTML = description;
 
-        const playButton = createButton('▶ הפעלה', 'play');
-        const pauseButton = createButton('⏸ השהייה', 'pause');
-        const stopButton = createButton('⏹ עצירה');
+        const timerSpan = document.createElement('span');
+        timerSpan.className = 'task-timer';
+        timerSpan.textContent = '00:00';
 
-        actionsDiv.classList.add('task-actions');
-        actionsDiv.appendChild(playButton);
-        actionsDiv.appendChild(pauseButton);
-        actionsDiv.appendChild(stopButton);
+        const playButton = document.createElement('button');
+        playButton.textContent = 'הפעלה';
 
-        li.appendChild(taskNumber);
-        li.appendChild(checkbox);
-        li.appendChild(span);
-        li.appendChild(descriptionDiv);
-        li.appendChild(showMore);
-        li.appendChild(timerDiv);
-        li.appendChild(actionsDiv);
+        const pauseButton = document.createElement('button');
+        pauseButton.textContent = 'השהייה';
 
-        taskList.appendChild(li);
-        updateTasksTodayCount();
+        const stopButton = document.createElement('button');
+        stopButton.textContent = 'עצירה';
 
-        let timerSeconds = 0;
+        let startTime, elapsedTime = 0, timerInterval;
+
+        function updateTime() {
+            const now = Date.now();
+            const diff = now - startTime + elapsedTime;
+            const minutes = Math.floor(diff / 60000);
+            const seconds = Math.floor((diff % 60000) / 1000);
+            timerSpan.textContent = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            totalTimeElement.textContent = parseInt(totalTimeElement.textContent) + 1;
+        }
 
         playButton.addEventListener('click', function() {
-            if (activeTimer && activeTaskElement !== li) {
-                clearInterval(activeTimer);
-                activeTaskElement.classList.remove('active-task');
-            }
-            activeTask = li;
-            activeTaskElement = li;
-            li.classList.add('active-task');
-            currentTaskElement.textContent = name;
-
-            activeTimer = setInterval(function() {
-                timerSeconds++;
-                totalMinutes++;
-                const hours = String(Math.floor(timerSeconds / 3600)).padStart(2, '0');
-                const minutes = String(Math.floor((timerSeconds % 3600) / 60)).padStart(2, '0');
-                const seconds = String(timerSeconds % 60).padStart(2, '0');
-                timerDiv.textContent = `${hours}:${minutes}:${seconds}`;
-                totalTimeElement.textContent = Math.floor(totalMinutes / 60);
-            }, 1000);
+            startTime = Date.now();
+            timerInterval = setInterval(updateTime, 1000);
+            currentTaskElement.textContent = title;
+            li.style.backgroundColor = '#deffd9';
         });
 
         pauseButton.addEventListener('click', function() {
-            if (activeTask === li) {
-                clearInterval(activeTimer);
-                activeTimer = null;
-            }
+            clearInterval(timerInterval);
+            elapsedTime += Date.now() - startTime;
         });
 
         stopButton.addEventListener('click', function() {
-            if (activeTask === li) {
-                clearInterval(activeTimer);
-                activeTimer = null;
-                li.classList.remove('active-task');
-                li.classList.add('completed-task');
-                completedTaskList.appendChild(li);
-                currentTaskElement.textContent = 'אין משימה פעילה';
-                const timeParts = timerDiv.textContent.split(':');
-                const taskMinutes = parseInt(timeParts[0]) * 60 + parseInt(timeParts[1]);
-                totalMinutes += taskMinutes;
-                totalTimeElement.textContent = Math.floor(totalMinutes / 60);
-                updateTasksTodayCount();
-            }
+            clearInterval(timerInterval);
+            li.classList.add('completed');
+            completedTaskList.appendChild(li);
+            li.style.backgroundColor = '#ccc';
+            updateTasksTodayCount();
         });
 
-        showMore.addEventListener('click', function() {
-            if (descriptionDiv.style.maxHeight) {
-                descriptionDiv.style.maxHeight = null;
-                showMore.textContent = 'משולם';
-            } else {
-                descriptionDiv.style.maxHeight = descriptionDiv.scrollHeight + 'px';
-                showMore.textContent = 'הצג פחות';
-            }
-        });
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+
+        const taskNumber = document.createElement('span');
+        taskNumber.className = 'task-number';
+
+        li.appendChild(taskNumber);
+        li.appendChild(checkbox);
+        li.appendChild(titleSpan);
+        li.appendChild(descDiv);
+        li.appendChild(playButton);
+        li.appendChild(pauseButton);
+        li.appendChild(stopButton);
+        li.appendChild(timerSpan);
 
         checkbox.addEventListener('change', function() {
             if (this.checked) {
@@ -134,18 +103,23 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             updateTasksTodayCount();
         });
+
+        return li;
     }
 
     function updateTasksTodayCount() {
         tasksTodayElement.textContent = taskList.children.length + completedTaskList.children.length;
     }
 
-    function getCurrentDate() {
-        const today = new Date();
-        const hebrewDate = new Intl.DateTimeFormat('he-u-ca-hebrew', { dateStyle: 'full' }).format(today);
-        const englishDate = today.toLocaleDateString('en-US');
-        return `${hebrewDate} | ${englishDate}`;
-    }
-
-    document.getElementById('date').textContent = getCurrentDate();
+    addTaskButton.addEventListener('click', function() {
+        const title = document.getElementById('task-title').value;
+        const description = tinymce.get('task-desc').getContent();
+        if (title) {
+            const taskElement = createTaskElement(title, description);
+            taskList.appendChild(taskElement);
+            document.getElementById('task-title').value = '';
+            tinymce.get('task-desc').setContent('');
+            updateTasksTodayCount();
+        }
+    });
 });
